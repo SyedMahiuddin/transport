@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:transport/views/card_screen.dart';
+import 'package:transport/views/profile_screen.dart';
+import 'package:transport/views/saved_trip.dart';
 import 'package:transport/views/transport_screen.dart';
 
 import '../customs/color_helper.dart';
@@ -23,8 +25,8 @@ class _OpalBottomNavBarState extends State<OpalBottomNavBar> {
     HomeScreen(),
     CardScreen(),
     TripPlannerScreen(),
-    HomeScreen(),
-    HomeScreen(),
+    SavedTripsScreen(),
+    ProfileScreen(),
   ];
 
   @override
@@ -61,8 +63,8 @@ class _OpalBottomNavBarState extends State<OpalBottomNavBar> {
               label: 'Planner',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.notifications, size: 24.w),
-              label: 'Alerts',
+              icon: Icon(Icons.favorite_border, size: 24.w),
+              label: 'Saved',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person, size: 24.w),

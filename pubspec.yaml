@@ -38,6 +38,7 @@ dependencies:
   flutter_screenutil:
   get: ^4.6.6
   dotted_border: ^2.1.0
+  google_maps_flutter:
 
 dev_dependencies:
   flutter_test:

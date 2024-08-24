@@ -14,7 +14,7 @@ class CardScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(height: 15.h),
+            SizedBox(height: 25.h),
             Container(
               width: MediaQuery.of(context).size.width,
               color: ColorHelper.primaryTheme,

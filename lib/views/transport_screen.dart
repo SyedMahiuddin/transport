@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:transport/views/map_screen.dart';
 
 import '../customs/color_helper.dart';
 
@@ -7,9 +9,9 @@ class TripPlannerScreen extends StatefulWidget {
   @override
   State<TripPlannerScreen> createState() => _TripPlannerScreenState();
 }
-
+bool stWriting=true;
 class _TripPlannerScreenState extends State<TripPlannerScreen> {
-  int selectedType=0;
+  int selectedTypeIndex=0;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,7 +41,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.radio_button_checked, color: Colors.white, size: 20.sp),
+                              Icon(stWriting?Icons.radio_button_checked:Icons.radio_button_unchecked, color: Colors.white, size: 20.sp),
                               SizedBox(width: 8.w),
                               Expanded(
                                 child: TextField(
@@ -47,6 +49,11 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                                     color: Colors.white,
                                     fontSize: 16.sp,
                                   ),
+                                  onTap: (){
+                                    setState(() {
+                                      stWriting=true;
+                                    });
+                                  },
                                   decoration: InputDecoration(
                                     hintText: 'Enter starting location',
                                     hintStyle: TextStyle(color: Colors.white54),
@@ -59,7 +66,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                           Divider(color: Colors.white, height: 20.h),
                           Row(
                             children: [
-                              Icon(Icons.radio_button_unchecked, color: Colors.white, size: 20.sp),
+                              Icon(stWriting==false?Icons.radio_button_checked:Icons.radio_button_unchecked, color: Colors.white, size: 20.sp),
                               SizedBox(width: 8.w),
                               Expanded(
                                 child: TextField(
@@ -67,6 +74,11 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                                     color: Colors.white,
                                     fontSize: 16.sp,
                                   ),
+                                  onTap: (){
+                                    setState(() {
+                                      stWriting=false;
+                                    });
+                                  },
                                   decoration: InputDecoration(
                                     hintText: 'Enter destination',
                                     hintStyle: TextStyle(color: Colors.white54),
@@ -108,10 +120,34 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildTransportOption(Icons.directions_walk, '1hr 14', true),
-                  _buildTransportOption(Icons.directions_bike, '3hr 22', false),
-                  _buildTransportOption(Icons.directions_walk, '--', false),
-                  _buildTransportOption(Icons.directions_car, '56 min', false),
+                  GestureDetector(
+                    onTap: (){
+                      setState(() {
+                        selectedTypeIndex=0;
+                      });
+                    },
+                      child: _buildTransportOption(Icons.directions_walk, '1hr 14', selectedTypeIndex==0?true: false)),
+                  GestureDetector(
+                      onTap: (){
+                        setState(() {
+                          selectedTypeIndex=1;
+                        });
+                      },
+                      child: _buildTransportOption(Icons.directions_bike, '3hr 22', selectedTypeIndex==1?true: false)),
+                  GestureDetector(
+                      onTap: (){
+                        setState(() {
+                          selectedTypeIndex=2;
+                        });
+                      },
+                      child: _buildTransportOption(Icons.directions_walk, '--', selectedTypeIndex==2?true: false)),
+                  GestureDetector(
+                      onTap: (){
+                        setState(() {
+                          selectedTypeIndex=3;
+                        });
+                      },
+                      child: _buildTransportOption(Icons.directions_car, '56 min',selectedTypeIndex==3?true: false)),
                   Icon(Icons.filter_list, color: Colors.white, size: 24.sp),
                 ],
               ),
@@ -133,10 +169,34 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                 ),
               ),
               SizedBox(height: 20.h),
-              _buildTripOption('4hrs', '7:18am - 8:32am', '1hr 14mins', '\$5.86', true),
-              _buildTripOption('4hrs', '7:48am - 9:02am', '1hr 14mins', '\$5.86', false),
-              _buildTripOption('5hrs', '8:18am - 9:32am', '1hr 14mins', '\$5.86', false),
-              _buildTripOption('5hrs', '8:23am - 9:57am', '1hr 34mins', '\$5.86', false),
+              InkWell(
+                  onTap: () {
+                    Get.to(() => MapScreen(),
+                        transition: Transition.downToUp,
+                        duration: Duration(milliseconds: 400));
+                  },
+                  child: _buildTripOption('4hrs', '7:18am - 8:32am', '1hr 14mins', '\$5.86', true)),
+              InkWell(
+                  onTap: () {
+                    Get.to(() => MapScreen(),
+                        transition: Transition.downToUp,
+                        duration: Duration(milliseconds: 400));
+                  },
+                  child: _buildTripOption('4hrs', '7:48am - 9:02am', '1hr 14mins', '\$5.86', false)),
+              InkWell(
+                  onTap: () {
+                    Get.to(() => MapScreen(),
+                        transition: Transition.downToUp,
+                        duration: Duration(milliseconds: 400));
+                  },
+                  child: _buildTripOption('5hrs', '8:18am - 9:32am', '1hr 14mins', '\$5.86', false)),
+              InkWell(
+                  onTap: () {
+                    Get.to(() => MapScreen(),
+                        transition: Transition.downToUp,
+                        duration: Duration(milliseconds: 400));
+                  },
+                  child: _buildTripOption('5hrs', '8:23am - 9:57am', '1hr 34mins', '\$5.86', false)),
             ],
           ),
         ),
@@ -146,10 +206,10 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
 
   Widget _buildTransportOption(IconData icon, String time, bool isSelected) {
     return Container(
-      padding: EdgeInsets.all(10.w),
+      padding: EdgeInsets.all(13.w),
       decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(70),
         color: isSelected ? ColorHelper.secondryTheme : ColorHelper.darkGrey,
-        shape: BoxShape.circle,
       ),
       child: Column(
         children: [
