@@ -23,9 +23,7 @@ class _OpalBottomNavBarState extends State<OpalBottomNavBar> {
   }
   final List<Widget> _screens = [
     HomeScreen(),
-    CardScreen(),
     TripPlannerScreen(),
-    SavedTripsScreen(),
     ProfileScreen(),
   ];
 
@@ -54,18 +52,12 @@ class _OpalBottomNavBarState extends State<OpalBottomNavBar> {
               icon: Icon(Icons.home, size: 24.w),
               label: 'Home',
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.credit_card, size: 24.w),
-              label: 'Cards',
-            ),
+
             BottomNavigationBarItem(
               icon: Icon(Icons.directions_bus, size: 24.w),
               label: 'Planner',
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.favorite_border, size: 24.w),
-              label: 'Saved',
-            ),
+
             BottomNavigationBarItem(
               icon: Icon(Icons.person, size: 24.w),
               label: 'Profile',

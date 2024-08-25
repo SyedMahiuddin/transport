@@ -1,8 +1,10 @@
-import 'package:flutter/cupertino.dart';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:http/http.dart' as http;
+import 'package:transport/Controller/map_controller.dart';
 
 import '../customs/color_helper.dart';
 
@@ -12,11 +14,15 @@ class MapScreen extends StatefulWidget {
 }
 
 class _MapScreenState extends State<MapScreen> {
-  final LatLng _center = const LatLng(-33.887385, 151.204274);
-  late GoogleMapController mapController;
-  void _onMapCreated(GoogleMapController controller) {
-    mapController = controller;
+
+
+  @override
+  void initState() {
+    super.initState();
+
   }
+
+ MapController mapController=Get.put(MapController());
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,13 +34,42 @@ class _MapScreenState extends State<MapScreen> {
             child: Container(
               color: ColorHelper.darkGrey, // Placeholder for map background color
               child: Center(
-                child: GoogleMap(
-                  onMapCreated: _onMapCreated,
-                  initialCameraPosition: CameraPosition(
-                    target: _center,
-                    zoom: 11.0,
+                child:  Obx(() => SizedBox(
+                  height: MediaQuery.of(context).size.height,
+                  width: MediaQuery.of(context).size.width,
+                  child: GoogleMap(
+                    markers: mapController.allMarkers.cast<Marker>().toSet(),
+                    polylines: {
+                      Polyline(
+                          polylineId: const PolylineId("route"),
+                          points: mapController.polylineCoordinates.value
+                              .map((geoPoint) =>
+                              LatLng(geoPoint.latitude, geoPoint.longitude))
+                              .toList(),
+                          color: Colors.blue,
+                          width: 7),
+                      Polyline(
+                          polylineId: const PolylineId("routewalk"),
+                          points: mapController.polylineCoordinatesWalk.value
+                              .map((geoPoint) =>
+                              LatLng(geoPoint.latitude, geoPoint.longitude))
+                              .toList(),
+                          color: Colors.grey,
+                          patterns: [PatternItem.dot],
+                          width: 7)
+                    },
+
+                    myLocationEnabled: true,
+                    myLocationButtonEnabled: true,
+                    mapType: MapType.normal,
+                    onMapCreated: mapController.onMapCreated,
+                    initialCameraPosition: CameraPosition(
+                      target: mapController.center,
+                      zoom: 15.0,
+                    ),
                   ),
-                )
+                )),
+
               ),
             ),
           ),
