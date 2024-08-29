@@ -15,6 +15,7 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
 
+  MapController mapController=Get.put(MapController());
 
   @override
   void initState() {
@@ -22,9 +23,9 @@ class _MapScreenState extends State<MapScreen> {
 
   }
 
- MapController mapController=Get.put(MapController());
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       backgroundColor: ColorHelper.primaryTheme,
       body: Stack(
@@ -43,21 +44,13 @@ class _MapScreenState extends State<MapScreen> {
                     polylines: {
                       Polyline(
                           polylineId: const PolylineId("route"),
-                          points: mapController.polylineCoordinates.value
+                          points: mapController.decodePolyline(mapController.selectedTripOption!.polyline)
                               .map((geoPoint) =>
                               LatLng(geoPoint.latitude, geoPoint.longitude))
                               .toList(),
                           color: Colors.blue,
                           width: 7),
-                      Polyline(
-                          polylineId: const PolylineId("routewalk"),
-                          points: mapController.polylineCoordinatesWalk.value
-                              .map((geoPoint) =>
-                              LatLng(geoPoint.latitude, geoPoint.longitude))
-                              .toList(),
-                          color: Colors.grey,
-                          patterns: [PatternItem.dot],
-                          width: 7)
+
                     },
 
                     myLocationEnabled: true,
@@ -139,7 +132,7 @@ class _MapScreenState extends State<MapScreen> {
                             ),
                           ),
                           Text(
-                            '70 mins',
+                            mapController.selectedTripOption!.duration,
                             style: TextStyle(
                               color: ColorHelper.primaryText,
                               fontSize: 16.sp,
@@ -150,7 +143,7 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                       Spacer(),
                       Text(
-                        '\$5.86',
+                        '\$${mapController.selectedTripOption!.cost}',
                         style: TextStyle(
                           color: ColorHelper.primaryText,
                           fontSize: 18.sp,

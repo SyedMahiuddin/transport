@@ -9,6 +9,7 @@ import 'package:google_place/google_place.dart';
 import 'package:transport/Repository/map_repo.dart';
 import 'package:transport/app_config.dart';
 import 'package:transport/models/marker_model.dart';
+import 'package:transport/views/transport_screen.dart';
 
 class MapController extends GetxController{
 
@@ -16,13 +17,14 @@ class MapController extends GetxController{
   @override
   void onInit() {
     // TODO: implement onInit
-    getPolyline();
+    //getPolyline();
     super.onInit();
   }
 
   final LatLng center = const LatLng(-33.887385, 151.204274);
   final LatLng centerDestination = const LatLng(-33.877385, 151.104274);
   var driverMarkerList = [].obs;
+  TripOption? selectedTripOption;
 
   final TextEditingController destinationController = TextEditingController();
   GooglePlace googlePlace = GooglePlace(AppConfig.mapApiKey);
@@ -164,31 +166,36 @@ class MapController extends GetxController{
   }
 
   void moveCameraToPolyline() {
-    if (polylineCoordinates.isEmpty) return;
+    if(selectedTripOption!=null)
+    {
+      print("camera moving to polyline");
+      polylineCoordinates.value=decodePolyline(selectedTripOption!.polyline);
+      double minLat = polylineCoordinates[0].latitude;
+      double maxLat = polylineCoordinates[0].latitude;
+      double minLng = polylineCoordinates[0].longitude;
+      double maxLng = polylineCoordinates[0].longitude;
 
-    double minLat = polylineCoordinates[0].latitude;
-    double maxLat = polylineCoordinates[0].latitude;
-    double minLng = polylineCoordinates[0].longitude;
-    double maxLng = polylineCoordinates[0].longitude;
+      for (var point in polylineCoordinates) {
+        if (point.latitude < minLat) minLat = point.latitude;
+        if (point.latitude > maxLat) maxLat = point.latitude;
+        if (point.longitude < minLng) minLng = point.longitude;
+        if (point.longitude > maxLng) maxLng = point.longitude;
+      }
 
-    for (var point in polylineCoordinates) {
-      if (point.latitude < minLat) minLat = point.latitude;
-      if (point.latitude > maxLat) maxLat = point.latitude;
-      if (point.longitude < minLng) minLng = point.longitude;
-      if (point.longitude > maxLng) maxLng = point.longitude;
+      LatLngBounds bounds = LatLngBounds(
+        southwest: LatLng(minLat, minLng),
+        northeast: LatLng(maxLat, maxLng),
+      );
+
+      mapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 60));
     }
 
-    LatLngBounds bounds = LatLngBounds(
-      southwest: LatLng(minLat, minLng),
-      northeast: LatLng(maxLat, maxLng),
-    );
-
-    mapController.animateCamera(CameraUpdate.newLatLngBounds(bounds, 60));
   }
 
 
   void onMapCreated(GoogleMapController controller) {
     mapController = controller;
+    moveCameraToPolyline();
   }
 
   void onCameraMove(CameraPosition position) {
@@ -198,4 +205,44 @@ class MapController extends GetxController{
   void onCameraIdle() {
     log("camera Idle");
   }
+
+
+  List<LatLng> decodePolyline(String encoded) {
+    List<LatLng> polyline = [];
+    int index = 0;
+    int len = encoded.length;
+    int lat = 0;
+    int lng = 0;
+
+    while (index < len) {
+      int b;
+      int shift = 0;
+      int result = 0;
+      do {
+        b = encoded.codeUnitAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      int dlat = (result & 1) != 0 ? ~(result >> 1) : (result >> 1);
+      lat += dlat;
+
+      shift = 0;
+      result = 0;
+      do {
+        b = encoded.codeUnitAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      int dlng = (result & 1) != 0 ? ~(result >> 1) : (result >> 1);
+      lng += dlng;
+
+      polyline.add(LatLng(
+        (lat / 1E5).toDouble(),
+        (lng / 1E5).toDouble(),
+      ));
+    }
+
+    return polyline;
+  }
+
 }
