@@ -43,6 +43,9 @@ dependencies:
   flutter_polyline_points:
   uuid: ^4.4.2
   google_place:
+  firebase_core: ^3.4.0
+  firebase_auth: ^5.2.0
+  cloud_firestore: ^5.3.0
 
 dev_dependencies:
   flutter_test:

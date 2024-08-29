@@ -6,7 +6,9 @@ import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_place/google_place.dart';
+import 'package:transport/Repository/map_repo.dart';
 import 'package:transport/app_config.dart';
+import 'package:transport/models/marker_model.dart';
 
 class MapController extends GetxController{
 
@@ -100,6 +102,39 @@ class MapController extends GetxController{
   final List<double> _rotations = [
     0.0, 45.0, 90.0,
   ];
+
+  void onMapTapped(LatLng position) {
+      allMarkers.add(
+        Marker(
+          markerId: MarkerId("tempMarker"),
+          position: position,
+          infoWindow: const InfoWindow(
+            title: '',
+          ),
+          icon: BitmapDescriptor.defaultMarker,
+        ),
+      );
+      MapRepository().addToFirestore(
+          LocationModel(title: "Place", description: "Police here", imageIcon: "", lat: 99.0, long: 77.0)
+      );
+  }
+
+  void onMapLongTapped(LatLng position)
+  {
+    allMarkers.add(
+      Marker(
+        markerId: MarkerId("tempMarker"),
+        position: position,
+        infoWindow: const InfoWindow(
+          title: '',
+        ),
+        icon: BitmapDescriptor.defaultMarker,
+      ),
+    );
+    MapRepository().addToFirestore(
+      LocationModel(title: "Place", description: "Police here", imageIcon: "", lat: 99.0, long: 77.0)
+    );
+  }
 
   Future<void> loadMarkers() async {
     await Future.delayed(const Duration(seconds: 1));

@@ -1,3 +1,18 @@
+buildscript {
+    ext.kotlin_version = '2.0.20' // Add or update Kotlin version if using Kotlin
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal() // Ensure this is included for Kotlin and other plugins
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.2.2' // Ensure you have the latest version
+        classpath 'com.google.gms:google-services:4.4.2' // Google Services plugin for Firebase
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version" // Add if using Kotlin
+        // NOTE: Do not place your application dependencies here; they belong in the individual module build.gradle files
+    }
+}
+
 allprojects {
     repositories {
         google()
@@ -8,9 +23,6 @@ allprojects {
 rootProject.buildDir = "../build"
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
-}
-subprojects {
-    project.evaluationDependsOn(":app")
 }
 
 tasks.register("clean", Delete) {

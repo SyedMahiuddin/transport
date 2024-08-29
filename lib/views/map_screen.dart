@@ -39,6 +39,7 @@ class _MapScreenState extends State<MapScreen> {
                   width: MediaQuery.of(context).size.width,
                   child: GoogleMap(
                     markers: mapController.allMarkers.cast<Marker>().toSet(),
+                    onTap: mapController.onMapTapped,
                     polylines: {
                       Polyline(
                           polylineId: const PolylineId("route"),
