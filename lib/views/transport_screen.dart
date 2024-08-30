@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -7,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:google_place/google_place.dart';
 import 'package:transport/Controller/map_controller.dart';
 import 'package:transport/app_config.dart';
+import 'package:transport/models/marker_model.dart';
 import 'package:transport/views/map_screen.dart';
 import '../customs/color_helper.dart';
 
@@ -19,6 +21,11 @@ class TripPlannerScreen extends StatefulWidget {
 }
 
 class _TripPlannerScreenState extends State<TripPlannerScreen> {
+  FocusNode startFocusNode = FocusNode();
+  FocusNode endFocusNode = FocusNode();
+
+  bool predictionSelected=false;
+
   MapController mapController=Get.put(MapController());
   int selectedTypeIndex = 3;
   bool stWriting = true;
@@ -85,10 +92,11 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                           predictions = [];
                         });
                         await _getPlaceDetails(startPlaceId, isStart: true);
-                      },
+                      }, focusNode: startFocusNode,
                     ),
                     Divider(color: Colors.white, height: 20.h),
                     _buildSearchField(
+                      focusNode: endFocusNode,
                       controller: destinationController,
                       hintText: 'Enter destination',
                       isStart: false,
@@ -98,7 +106,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                           predictions = [];
                         });
                         await _getPlaceDetails(destinationPlaceId, isStart: false);
-                      },
+                      }, 
                     ),
                   ],
                 ),
@@ -119,7 +127,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                     ),
                   ),
                   child: Text(
-                    'Save this trip',
+                    'Search for trips',
                     style: TextStyle(
                       color: ColorHelper.primaryTheme,
                       fontSize: 14.sp,
@@ -212,6 +220,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
     required String hintText,
     required bool isStart,
     required Function(AutocompletePrediction) onSelected,
+    required FocusNode focusNode, // Add predictions list for each TextField
   }) {
     return Column(
       children: [
@@ -226,6 +235,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
             Expanded(
               child: TextField(
                 controller: controller,
+                focusNode: focusNode, // Attach the FocusNode to detect field focus
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 16.sp,
@@ -235,20 +245,36 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                   hintStyle: TextStyle(color: Colors.white54),
                   border: InputBorder.none,
                 ),
+                onChanged: (value) {
+                  setState(() {
+                    predictionSelected=false;
+                  });
+                  // You can update predictions based on the value input here
+                  // For example, call a function to fetch new predictions
+                },
               ),
             ),
           ],
         ),
-        if (predictions.isNotEmpty)
+        if (focusNode.hasFocus && predictions.isNotEmpty && predictionSelected==false) // Check if the TextField is focused and predictions are available
           Container(
-            color: ColorHelper.darkGrey,
+            color: Colors.grey.shade800,
             child: ListView.builder(
               shrinkWrap: true,
               itemCount: predictions.length,
               itemBuilder: (context, index) {
                 return ListTile(
-                  title: Text(predictions[index].description ?? '', style: TextStyle(color: Colors.white)),
-                  onTap: () => onSelected(predictions[index]),
+                  title: Text(
+                    predictions[index].description ?? '',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  onTap: () {
+                   setState(() {
+                     predictionSelected=true;
+                   });
+                    controller.text = predictions[index].description ?? '';
+                    onSelected(predictions[index]);
+                  },
                 );
               },
             ),
@@ -292,6 +318,8 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
       }
     }
   }
+
+
 
   Future<void> _suggestTripOptions() async {
     print("making suggesstions");

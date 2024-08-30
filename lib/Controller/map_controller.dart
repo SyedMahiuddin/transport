@@ -1,10 +1,15 @@
+
+
 import 'dart:developer';
 
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:get/get.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_place/google_place.dart';
 import 'package:transport/Repository/map_repo.dart';
 import 'package:transport/app_config.dart';
@@ -18,6 +23,7 @@ class MapController extends GetxController{
   void onInit() {
     // TODO: implement onInit
     //getPolyline();
+    getLocations();
     super.onInit();
   }
 
@@ -34,6 +40,61 @@ class MapController extends GetxController{
   var polylineCoordinates = [].obs;
   var polylineCoordinatesWalk = [].obs;
   var findingRoutes=false.obs;
+
+
+  var allLocations = [].obs;
+  Future<void> getLocations() async {
+    MapRepository().getLocations().listen((event) async{
+      allLocations.value = List.generate(
+          event.docs.length,
+              (index) => LocationModel.fromJson(
+              event.docs[index].data()));
+      List<Marker> newMarkers = await  convertLocationsToMarkers(allLocations);
+      markers.value=  newMarkers.toSet();
+    });
+  }
+  Future<BitmapDescriptor> _getMarkerIconFromTitle(String title) async {
+    String assetPath;
+    if (title.contains('Cafe')) {
+      assetPath = 'assets/images/cafeMark.png';
+    } else if (title.contains('Police')) {
+      assetPath = 'assets/images/libraryMark.png';
+    } else if (title.contains('Danger')) {
+      assetPath = 'assets/images/dangerMark.png';
+    } else if (title.contains('Library')) {
+      assetPath = 'assets/images/libraryMark.png';
+    } else {
+      // Return default marker if no specific icon is set
+      return BitmapDescriptor.defaultMarker;
+    }
+    return await BitmapDescriptor.fromAssetImage(
+      const ImageConfiguration(size: Size(24, 24)), // Adjust the size as needed
+      assetPath,
+    );
+  }
+
+  Future<List<Marker>> convertLocationsToMarkers(var locations) async {
+    print("loading markers");
+    List<Marker> markers = [];
+
+    for (var location in locations) {
+      final BitmapDescriptor markerIcon = await _getMarkerIconFromTitle(location.title);
+
+      markers.add(
+        Marker(
+          markerId: MarkerId(location.title),
+          position: LatLng(location.geopoint.latitude, location.geopoint.longitude),
+          icon: markerIcon,
+          infoWindow: InfoWindow(
+            title: location.title,
+            snippet: location.description,
+          ),
+        ),
+      );
+    }
+
+    return markers;
+  }
   getPolyline() async {
     findingRoutes.value=true;
     polyLines.clear();
@@ -79,7 +140,7 @@ class MapController extends GetxController{
 
 
 
-
+var markers= <Marker>{}.obs;
   var allMarkers = <Marker>{
     Marker(
       markerId: MarkerId('start'),
@@ -116,13 +177,12 @@ class MapController extends GetxController{
           icon: BitmapDescriptor.defaultMarker,
         ),
       );
-      MapRepository().addToFirestore(
-          LocationModel(title: "Place", description: "Police here", imageIcon: "", lat: 99.0, long: 77.0)
-      );
   }
-
+late GeoPoint longPickedPoint;
+  var addingPlace=false.obs;
   void onMapLongTapped(LatLng position)
   {
+    addingPlace.value=true;
     allMarkers.add(
       Marker(
         markerId: MarkerId("tempMarker"),
@@ -133,9 +193,23 @@ class MapController extends GetxController{
         icon: BitmapDescriptor.defaultMarker,
       ),
     );
-    MapRepository().addToFirestore(
-      LocationModel(title: "Place", description: "Police here", imageIcon: "", lat: 99.0, long: 77.0)
-    );
+
+    longPickedPoint= GeoPoint(position.latitude, position.longitude);
+
+    //getPlaceDetailsforMarker(placeId);
+    // MapRepository().addToFirestore(
+    //   LocationModel(title: "Place", description: "Police here", imageIcon: "", lat: 99.0, long: 77.0)
+    // );
+  }
+
+  Future<void> getPlaceDetailsforMarker(String placeId) async {
+
+    var result = await googlePlace.details.get(placeId);
+    if (result != null && result.result != null && result.result!.geometry != null) {
+      var location = result.result!.geometry!.location;
+      LatLng latLng = LatLng(location!.lat!, location.lng!);
+
+    }
   }
 
   Future<void> loadMarkers() async {

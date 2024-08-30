@@ -7,6 +7,8 @@ import 'package:http/http.dart' as http;
 import 'package:transport/Controller/map_controller.dart';
 
 import '../customs/color_helper.dart';
+import '../models/marker_model.dart';
+import 'add_place.dart';
 
 class MapScreen extends StatefulWidget {
   @override
@@ -22,6 +24,8 @@ class _MapScreenState extends State<MapScreen> {
     super.initState();
 
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -39,8 +43,9 @@ class _MapScreenState extends State<MapScreen> {
                   height: MediaQuery.of(context).size.height,
                   width: MediaQuery.of(context).size.width,
                   child: GoogleMap(
-                    markers: mapController.allMarkers.cast<Marker>().toSet(),
+                    markers: mapController.markers.cast<Marker>().toSet(),
                     onTap: mapController.onMapTapped,
+                    onLongPress: mapController.onMapLongTapped,
                     polylines: {
                       Polyline(
                           polylineId: const PolylineId("route"),
@@ -202,6 +207,10 @@ class _MapScreenState extends State<MapScreen> {
               ),
             ),
           ),
+          Align(
+            alignment: Alignment.center,
+            child: Obx(()=>mapController.addingPlace.value?AddPlacePopup():SizedBox()),
+          )
         ],
       ),
     );

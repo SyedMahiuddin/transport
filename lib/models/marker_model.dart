@@ -1,18 +1,17 @@
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firebase package for GeoPoint
 
 class LocationModel {
-  final String title;
-  final String description;
-  final String imageIcon;
-  final double lat;
-  final double long;
+   String title;
+   String description;
+   String imageIcon;
+   GeoPoint geopoint; // Use Firebase GeoPoint
 
   LocationModel({
     required this.title,
     required this.description,
     required this.imageIcon,
-    required this.lat,
-    required this.long,
+    required this.geopoint, // Initialize with GeoPoint
   });
 
   // Create a LocationModel from a JSON object
@@ -21,8 +20,10 @@ class LocationModel {
       title: json['title'] as String,
       description: json['description'] as String,
       imageIcon: json['imageIcon'] as String,
-      lat: (json['lat'] as num).toDouble(),
-      long: (json['long'] as num).toDouble(),
+      geopoint: GeoPoint(
+        (json['geopoint']['latitude'] as num).toDouble(),
+        (json['geopoint']['longitude'] as num).toDouble(),
+      ), // Parse GeoPoint
     );
   }
 
@@ -32,8 +33,10 @@ class LocationModel {
       'title': title,
       'description': description,
       'imageIcon': imageIcon,
-      'lat': lat,
-      'long': long,
+      'geopoint': {
+        'latitude': geopoint.latitude,
+        'longitude': geopoint.longitude,
+      }, // Convert GeoPoint to JSON
     };
   }
 
