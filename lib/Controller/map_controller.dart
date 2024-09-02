@@ -27,6 +27,7 @@ class MapController extends GetxController{
     super.onInit();
   }
 
+  var openMapOnly=false.obs;
   final LatLng center = const LatLng(-33.887385, 151.204274);
   final LatLng centerDestination = const LatLng(-33.877385, 151.104274);
   var driverMarkerList = [].obs;

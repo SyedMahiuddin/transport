@@ -46,7 +46,7 @@ class _MapScreenState extends State<MapScreen> {
                     markers: mapController.markers.cast<Marker>().toSet(),
                     onTap: mapController.onMapTapped,
                     onLongPress: mapController.onMapLongTapped,
-                    polylines: {
+                    polylines: mapController.openMapOnly.value?{}: {
                       Polyline(
                           polylineId: const PolylineId("route"),
                           points: mapController.decodePolyline(mapController.selectedTripOption!.polyline)
@@ -63,7 +63,7 @@ class _MapScreenState extends State<MapScreen> {
                     mapType: MapType.normal,
                     onMapCreated: mapController.onMapCreated,
                     initialCameraPosition: CameraPosition(
-                      target: mapController.center,
+                      target:mapController.openMapOnly.value?mapController.centerDestination: mapController.center,
                       zoom: 15.0,
                     ),
                   ),
@@ -78,7 +78,9 @@ class _MapScreenState extends State<MapScreen> {
             left: 10.w,
             child: InkWell(
               onTap: (){
+
               Get.back();
+              //mapController.openMapOnly.value=false;
             }, child:Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -114,7 +116,7 @@ class _MapScreenState extends State<MapScreen> {
             bottom: 0,
             left: 0,
             right: 0,
-            child: Container(
+            child: mapController.openMapOnly.value?SizedBox(): Container(
               padding: EdgeInsets.all(16.w),
               decoration: BoxDecoration(
                 color: ColorHelper.primaryTheme,

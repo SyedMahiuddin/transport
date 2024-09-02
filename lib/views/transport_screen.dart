@@ -194,6 +194,7 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
               SizedBox(height: 20.h),
               ...tripOptions.map((option) => InkWell(
                 onTap: () {
+                  mapController.openMapOnly.value=false;
                   mapController.selectedTripOption=option;
 
                   Get.to(() => MapScreen(), transition: Transition.downToUp, duration: Duration(milliseconds: 400));
@@ -254,6 +255,14 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                 },
               ),
             ),
+           controller.text.isNotEmpty && predictionSelected?
+           IconButton(
+               onPressed: (){
+                 mapController.openMapOnly.value=true;
+                 mapController.polylineCoordinates.clear();
+                  Get.to(() => MapScreen(), transition: Transition.downToUp, duration: Duration(milliseconds: 400));
+               }, icon: 
+           const Icon(Icons.map_outlined,color: ColorHelper.secondryTheme,)):SizedBox()
           ],
         ),
         if (focusNode.hasFocus && predictions.isNotEmpty && predictionSelected==false) // Check if the TextField is focused and predictions are available
