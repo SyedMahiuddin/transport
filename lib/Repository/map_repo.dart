@@ -1,8 +1,12 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:transport/models/station_model.dart';
 
+import '../app_config.dart';
 import '../models/marker_model.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
@@ -13,7 +17,60 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image/image.dart' as img;
 
+import 'package:http/http.dart' as http;
+
 class MapRepository {
+
+  Future<List<StationModel>> fetchNearbyStations(Position currentPosition) async {
+    final apiKey = AppConfig.mapApiKey;
+    const radius = 10000; // 10 km radius
+    final lat = currentPosition.latitude;
+    final lng = currentPosition.longitude;
+
+    final url =
+        'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=$lat,$lng&radius=$radius&type=transit_station&key=$apiKey';
+
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final List results = data['results'];
+
+      // Map the API data to a List of Station objects
+      List<StationModel> stations = results.map((result) {
+        String name = result['name'];
+        double stationLat = result['geometry']['location']['lat'];
+        double stationLng = result['geometry']['location']['lng'];
+        GeoPoint location = GeoPoint(stationLat, stationLng);
+
+        // Calculate the distance
+        double distance = calculateDistance(lat, lng, stationLat, stationLng);
+
+        // Get the image URL (photo reference)
+        String imageUrl = '';
+        if (result['photos'] != null && result['photos'].isNotEmpty) {
+          final photoReference = result['photos'][0]['photo_reference'];
+          imageUrl =
+          'https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=$photoReference&key=$apiKey';
+        }
+
+        // Return Station object
+        return StationModel(
+          name: name,
+          location: location,
+          distance: distance / 1000, // Convert to kilometers
+          imageUrl: imageUrl,
+        );
+      }).toList();
+
+      return stations;
+    } else {
+      throw Exception('Failed to load nearby stations');
+    }
+  }
+
+  double calculateDistance(double startLat, double startLng, double endLat, double endLng) {
+    return Geolocator.distanceBetween(startLat, startLng, endLat, endLng); // returns distance in meters
+  }
 
   Future<void> addToFirestore(LocationModel location, String imagePath) async {
     try {

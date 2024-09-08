@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -45,13 +46,13 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
     super.initState();
     startController.addListener(() async {
       if (startController.text.isNotEmpty) {
-        await _autocompleteSearch(startController.text, true);
+       // await _autocompleteSearch(startController.text, true);
       }
     });
 
     destinationController.addListener(() async {
       if (destinationController.text.isNotEmpty) {
-        await _autocompleteSearch(destinationController.text, false);
+       // await _autocompleteSearch(destinationController.text, false);
       }
     });
   }
@@ -88,10 +89,10 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                       isStart: true,
                       onSelected: (prediction) async {
                         setState(() {
-                          startPlaceId = prediction.placeId ?? '';
-                          predictions = [];
+                          // startPlaceId = prediction.placeId ?? '';
+                          // predictions = [];
                         });
-                        await _getPlaceDetails(startPlaceId, isStart: true);
+                       // await _getPlaceDetails(startPlaceId, isStart: true);
                       }, focusNode: startFocusNode,
                     ),
                     Divider(color: Colors.white, height: 20.h),
@@ -102,39 +103,39 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                       isStart: false,
                       onSelected: (prediction) async {
                         setState(() {
-                          destinationPlaceId = prediction.placeId ?? '';
-                          predictions = [];
+                          // destinationPlaceId = prediction.placeId ?? '';
+                          // predictions = [];
                         });
-                        await _getPlaceDetails(destinationPlaceId, isStart: false);
+                        //await _getPlaceDetails(destinationPlaceId, isStart: false);
                       }, 
                     ),
                   ],
                 ),
               ),
               SizedBox(height: 20.h),
-              Center(
-                child: ElevatedButton(
-                  onPressed: () {
-                    if (startLatLng != null && destinationLatLng != null) {
-                      _suggestTripOptions();
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColorHelper.secondryTheme,
-                    padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                  ),
-                  child: Text(
-                    'Search for trips',
-                    style: TextStyle(
-                      color: ColorHelper.primaryTheme,
-                      fontSize: 14.sp,
-                    ),
-                  ),
-                ),
-              ),
+              // Center(
+              //   child: ElevatedButton(
+              //     onPressed: () {
+              //       if (startLatLng != null && destinationLatLng != null) {
+              //       //  _suggestTripOptions();
+              //       }
+              //     },
+              //     style: ElevatedButton.styleFrom(
+              //       backgroundColor: ColorHelper.secondryTheme,
+              //       padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+              //       shape: RoundedRectangleBorder(
+              //         borderRadius: BorderRadius.circular(8.r),
+              //       ),
+              //     ),
+              //     child: Text(
+              //       'Search for trips',
+              //       style: TextStyle(
+              //         color: ColorHelper.primaryTheme,
+              //         fontSize: 14.sp,
+              //       ),
+              //     ),
+              //   ),
+              // ),
               SizedBox(height: 20.h),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -247,6 +248,21 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
                   border: InputBorder.none,
                 ),
                 onChanged: (value) {
+                  if(mapController.gettingStations.value)
+                    {
+                      Fluttertoast.showToast(
+                          msg: "Loading nearby stations ", // Message to be displayed
+                          toastLength: Toast.LENGTH_LONG, // Duration: Toast.LENGTH_SHORT or Toast.LENGTH_LONG
+                          gravity: ToastGravity.TOP, // Position of the toast: BOTTOM, TOP, CENTER
+                          backgroundColor: Colors.black, // Background color of the toast
+                          textColor: Colors.amber, // Text color
+                          fontSize: 18.0 // Font size
+                      );
+                    }
+                  else{
+                    mapController.searchStations(value);
+                  }
+
                   setState(() {
                     predictionSelected=false;
                   });
@@ -265,80 +281,94 @@ class _TripPlannerScreenState extends State<TripPlannerScreen> {
            const Icon(Icons.map_outlined,color: ColorHelper.secondryTheme,)):SizedBox()
           ],
         ),
-        if (focusNode.hasFocus && predictions.isNotEmpty && predictionSelected==false) // Check if the TextField is focused and predictions are available
+        if (focusNode.hasFocus && mapController.filterStation.isNotEmpty && predictionSelected==false) // Check if the TextField is focused and predictions are available
           Container(
             color: Colors.grey.shade800,
-            child: ListView.builder(
+            child: Obx(()=>ListView.builder(
               shrinkWrap: true,
-              itemCount: predictions.length,
+              itemCount:mapController.filterStation.length,
               itemBuilder: (context, index) {
+                var station= mapController.filterStation[index];
                 return ListTile(
                   title: Text(
-                    predictions[index].description ?? '',
+                    station.name ?? '',
                     style: TextStyle(color: Colors.white),
                   ),
                   onTap: () {
-                   setState(() {
-                     predictionSelected=true;
-                   });
-                    controller.text = predictions[index].description ?? '';
-                    onSelected(predictions[index]);
+                    setState(() {
+                      predictionSelected=true;
+                    });
+                    controller.text = station.name ?? '';
+                    if(controller==destinationController)
+                      {
+                        mapController.centerDestination= LatLng(station.location.latitude, station.location.longitude);
+                        destinationLatLng= LatLng(station.location.latitude, station.location.longitude);
+                      }
+                    else{
+                      mapController.center= LatLng(station.location.latitude, station.location.longitude);
+                      startLatLng= LatLng(station.location.latitude, station.location.longitude);
+                    }
+                    if(startController.text.length>=1 && destinationController.text.length>=1)
+                      {
+                        _suggestTripOptions(mapController.center,mapController.centerDestination);
+                      }
+
                   },
                 );
               },
-            ),
+            )),
           ),
       ],
     );
   }
 
-  Future<void> _autocompleteSearch(String value, bool isStart) async {
-    if (value.isEmpty) {
-      setState(() {
-        predictions = [];
-      });
-      return;
-    }
-    var result = await googlePlace.autocomplete.get(value);
-    if (result != null && result.predictions != null) {
-      setState(() {
-        predictions = result.predictions!;
-      });
-    }
-  }
+  // Future<void> _autocompleteSearch(String value, bool isStart) async {
+  //   if (value.isEmpty) {
+  //     setState(() {
+  //       predictions = [];
+  //     });
+  //     return;
+  //   }
+  //   var result = await googlePlace.autocomplete.get(value);
+  //   if (result != null && result.predictions != null) {
+  //     setState(() {
+  //       predictions = result.predictions!;
+  //     });
+  //   }
+  // }
+  //
+  // Future<void> _getPlaceDetails(String placeId, {required bool isStart}) async {
+  //   var result = await googlePlace.details.get(placeId);
+  //   if (result != null && result.result != null && result.result!.geometry != null) {
+  //     var location = result.result!.geometry!.location;
+  //     LatLng latLng = LatLng(location!.lat!, location.lng!);
+  //     setState(() {
+  //       if (isStart) {
+  //         print("getting start letLng");
+  //         startLatLng = latLng;
+  //       } else {
+  //         print("getting end letLng");
+  //         destinationLatLng = latLng;
+  //       }
+  //     });
+  //
+  //     if (startLatLng != null && destinationLatLng != null) {
+  //       _suggestTripOptions();
+  //     }
+  //   }
+  // }
 
-  Future<void> _getPlaceDetails(String placeId, {required bool isStart}) async {
-    var result = await googlePlace.details.get(placeId);
-    if (result != null && result.result != null && result.result!.geometry != null) {
-      var location = result.result!.geometry!.location;
-      LatLng latLng = LatLng(location!.lat!, location.lng!);
-      setState(() {
-        if (isStart) {
-          print("getting start letLng");
-          startLatLng = latLng;
-        } else {
-          print("getting end letLng");
-          destinationLatLng = latLng;
-        }
-      });
-
-      if (startLatLng != null && destinationLatLng != null) {
-        _suggestTripOptions();
-      }
-    }
-  }
 
 
-
-  Future<void> _suggestTripOptions() async {
+  Future<void> _suggestTripOptions(LatLng start, LatLng end) async {
     print("making suggesstions");
     if (startLatLng != null && destinationLatLng != null) {
       // Fetch trip options for different transport modes
       List<TripOption> options = [];
-      options.addAll(await _fetchTripOptions(startLatLng!, destinationLatLng!, 'transit'));
-      options.addAll(await _fetchTripOptions(startLatLng!, destinationLatLng!, 'driving'));
-      options.addAll(await _fetchTripOptions(startLatLng!, destinationLatLng!, 'bicycling'));
-      options.addAll(await _fetchTripOptions(startLatLng!, destinationLatLng!, 'walking'));
+      options.addAll(await _fetchTripOptions(start!, end!, 'transit'));
+      options.addAll(await _fetchTripOptions(start!, end!, 'driving'));
+      options.addAll(await _fetchTripOptions(start!, end!, 'bicycling'));
+      options.addAll(await _fetchTripOptions(start!, end!, 'walking'));
 
       setState(() {
         tripOptions = options;

@@ -2,6 +2,8 @@
 
 import 'dart:developer';
 
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 
@@ -22,14 +24,57 @@ class MapController extends GetxController{
   @override
   void onInit() {
     // TODO: implement onInit
+    getStations();
     //getPolyline();
     getLocations();
     super.onInit();
   }
 
+  var nearByStations=[].obs;
+var gettingStations=false.obs;
+  Future<void> getStations() async{
+    gettingStations.value=true;
+    checkLocationServiceAndPermission();
+    nearByStations.clear();
+    final Position currentPosition = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+    myLocation=currentPosition;
+    nearByStations.value=await MapRepository().fetchNearbyStations(currentPosition);
+    log("station found : ${nearByStations.length.toString()}");
+    log("station 1 : ${nearByStations[0].name.toString()}");
+    gettingStations.value=false;
+    Fluttertoast.showToast(
+        msg: "Ready to search.... ", // Message to be displayed
+        toastLength: Toast.LENGTH_LONG, // Duration: Toast.LENGTH_SHORT or Toast.LENGTH_LONG
+        gravity: ToastGravity.TOP, // Position of the toast: BOTTOM, TOP, CENTER
+        backgroundColor: Colors.black, // Background color of the toast
+        textColor: Colors.amber, // Text color
+        fontSize: 18.0 // Font size
+    );
+  }
+var filterStation=[].obs;
+  void searchStations(String query) {
+    if (query.isEmpty) {
+      filterStation.assignAll(nearByStations);
+    } else {
+      filterStation.assignAll(
+        nearByStations.where((station) => station.name.toLowerCase().contains(query.toLowerCase())).toList(),
+      );
+    }
+    log("filtering: ${filterStation.length.toString()}");
+  }
+
+  Future<void> checkLocationServiceAndPermission() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return;
+    }
+  }
+
   var openMapOnly=false.obs;
-  final LatLng center = const LatLng(-33.887385, 151.204274);
-  final LatLng centerDestination = const LatLng(-33.877385, 151.104274);
+   LatLng center =  LatLng(-33.887385, 151.204274);
+   LatLng centerDestination =  LatLng(-33.877385, 151.104274);
+   late Position myLocation;
   var driverMarkerList = [].obs;
   TripOption? selectedTripOption;
 
@@ -44,6 +89,7 @@ class MapController extends GetxController{
 
 
   var allLocations = [].obs;
+
   Future<void> getLocations() async {
     MapRepository().getLocations().listen((event) async{
       allLocations.value = List.generate(
@@ -54,6 +100,7 @@ class MapController extends GetxController{
       markers.value=  newMarkers.toSet();
     });
   }
+
   Future<BitmapDescriptor> _getMarkerIconFromTitle(String title) async {
     String assetPath;
     if (title.contains('Cafe')) {
@@ -96,6 +143,7 @@ class MapController extends GetxController{
 
     return markers;
   }
+
   getPolyline() async {
     findingRoutes.value=true;
     polyLines.clear();
@@ -121,9 +169,9 @@ class MapController extends GetxController{
     PolylineResult resultWalk = await polylinePoints.getRouteBetweenCoordinates(
       AppConfig.mapApiKey,
       PointLatLng(
-          center.latitude, center.longitude),
-      PointLatLng(centerDestination.latitude,
-          centerDestination.longitude),
+          myLocation.latitude, myLocation.longitude),
+      PointLatLng(center.latitude,
+          center.longitude),
       travelMode: TravelMode.walking,
     );
     log("polyLineResponse: ${result.points.length}");
@@ -138,8 +186,6 @@ class MapController extends GetxController{
     moveCameraToPolyline();
     findingRoutes.value=false;
   }
-
-
 
 var markers= <Marker>{}.obs;
   var allMarkers = <Marker>{
@@ -179,6 +225,7 @@ var markers= <Marker>{}.obs;
         ),
       );
   }
+
 late GeoPoint longPickedPoint;
   var addingPlace=false.obs;
   void onMapLongTapped(LatLng position)

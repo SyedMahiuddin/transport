@@ -1,8 +1,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:transport/Controller/map_controller.dart';
 import '../customs/color_helper.dart';
 class HomeScreen extends StatelessWidget {
+  MapController mapController=Get.put(MapController());
   @override
   Widget build(BuildContext context) {
     return Scaffold(
