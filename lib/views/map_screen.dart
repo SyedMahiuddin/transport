@@ -164,7 +164,7 @@ class _MapScreenState extends State<MapScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          '7:18am - 8:32am  1hr 14mins',
+                          '${DateTime.now().hour}: ${DateTime.now().minute} -  ${DateTime.now().toString().substring(11,16)}  ${mapController.selectedTripOption!.duration}',
                           style: TextStyle(
                             color: ColorHelper.primaryText,
                             fontSize: 16.sp,
